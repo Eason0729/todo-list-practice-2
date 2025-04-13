@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: prac_db
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: PassWWdd
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    profiles: ["", frontend-dev, backend-dev]
+    # labels:
+    #     - "traefik.enable=true"
+    #     - "traefik.http.routers.prac2-b.rule=Host(`prac2-b.example.com`)"
+    #     - "traefik.http.services.prac2-b.loadbalancer.server.port=3000"
+    #     - "traefik.http.routers.prac2-b.tls.domains[0].main=example.com"
+    #     - "traefik.http.routers.prac2-b.tls.domains[0].sans=*.example.com"
+    #     - "traefik.http.routers.prac2-b.tls.certresolver=gcp"
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ./Dockerfile.backend
+    depends_on: [postgres]
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://postgres_user:PassWWdd@postgres:5432/prac_db
+    profiles: ["", frontend-dev]
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ./Dockerfile.frontend
+      args:
+        BACKEND_URL: http://localhost:8000
+    depends_on: [backend]
+    ports:
+      - "3000:3000"
+    profiles: [""]
+    # labels:
+    #     - "traefik.enable=true"
+    #     - "traefik.http.routers.prac2-f.rule=Host(`prac2-f.example.com`)"
+    #     - "traefik.http.services.prac2-f.loadbalancer.server.port=3000"
+    #     - "traefik.http.routers.prac2-f.tls.domains[0].main=example.com"
+    #     - "traefik.http.routers.prac2-f.tls.domains[0].sans=*.example.com"
+    #     - "traefik.http.routers.prac2-f.tls.certresolver=gcp"
+
+volumes:
+  postgres_data: {}
