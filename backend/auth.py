@@ -3,12 +3,13 @@ from os import getenv
 import secrets
 from argon2 import PasswordHasher
 
+from fastapi import Request, Depends, HTTPException
 from typing import Generator
 import jwt
 
 from pydantic import BaseModel
 
-SECRET_KEY = (
+SECRET_KEY = str(
     getenv("JWT_SECRET")
     if getenv("JWT_SECRET") is not None
     else secrets.token_urlsafe(32)
@@ -99,3 +100,11 @@ def get_auth_ctrl() -> Generator[AuthController, None, None]:
         access_token_expire_minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
     )
     yield auth_ctrl
+
+
+def verify_token(req: Request, auth_ctrl: AuthController = Depends(get_auth_ctrl)):
+    token = req.headers["Authorization"]
+    user_id = auth_ctrl.verify_and_decode_access_token(token)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return user_id

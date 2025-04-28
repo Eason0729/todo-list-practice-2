@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from models import Users, get_db
 
-from auth import AuthController, get_auth_ctrl
+from auth import AuthController, get_auth_ctrl, UserId
 
 router = APIRouter(tags=["token"])
 
@@ -40,7 +40,7 @@ def create_token(
     if not auth.verify_password(request.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid password")
 
-    token = auth.create_access_token(user)
+    token = auth.create_access_token(UserId(user.id))
 
     return {"token": token, "user_id": user.id}
 
@@ -59,7 +59,7 @@ def verify_token(
 ):
     try:
         auth.verify_and_decode_access_token(request.token)
-    except Exception as e:
+    except Exception:
         return {"verified": False}
 
     return {"verified": True}

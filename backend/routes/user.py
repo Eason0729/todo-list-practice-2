@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
 from models import Users, get_db, Paginate
@@ -44,7 +44,7 @@ class GetUserResponse(BaseModel):
 def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.id == user_id).first()
     if not user:
-        return {"error": "User not found"}
+        raise HTTPException(status_code=404, detail="User not found")
     return {
         "user": {
             "id": user.id,
